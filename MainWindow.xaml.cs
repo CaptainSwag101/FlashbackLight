@@ -29,8 +29,15 @@ namespace FlashbackLight
         public string CurrentFileSystemDir;
         public string CurrentArchivePath;
 
+        private struct EditorTrackingInfo
+        {
+            public object Editor;
+            public string OriginArchivePath;
+            public string SubfileName;
+        }
+
         // Key is editor temporary scratch directory
-        public Dictionary<string, (object Editor, string OriginArchivePath, string SubfileName)> ActiveFileDatabase;
+        private readonly Dictionary<string, EditorTrackingInfo> ActiveFileDatabase;
 
         public MainWindow()
         {
@@ -43,7 +50,7 @@ namespace FlashbackLight
             string tempDir = Path.Combine(Path.GetTempPath(), "FlashbackLight");
             AppTempDirInfo = Directory.CreateDirectory(tempDir);
 
-            ActiveFileDatabase = new Dictionary<string, (object Editor, string OriginArchivePath, string SubfileName)>();
+            ActiveFileDatabase = new Dictionary<string, EditorTrackingInfo>();
 
             // Load config files
             Config.FileAssociationConfig.Load();
@@ -176,12 +183,12 @@ namespace FlashbackLight
             if (sender == null || !(sender is ListView))
                 return;
 
-            if (!((sender as ListView).SelectedItem is TextBlock originTextBlock))
+            if (!((sender as ListView).SelectedItem is TextBlock selectedTextBlock))
                 return;
 
 
             // Open an editor based on target file type
-            string targetFileExt = Path.GetExtension(originTextBlock.Text).ToLowerInvariant();
+            string targetFileExt = Path.GetExtension(selectedTextBlock.Text).ToLowerInvariant();
 
             // Throw an error if we can't find a valid editor 
             if (!Config.FileAssociationConfig.AssociationList.ContainsKey(targetFileExt))
@@ -197,14 +204,14 @@ namespace FlashbackLight
             // Extract the subfile to a temporary folder
             SpcFile temp = new SpcFile();
             temp.Load(CurrentArchivePath);
-            temp.ExtractSubfile(originTextBlock.Text, generatedTempDir);
+            temp.ExtractSubfile(selectedTextBlock.Text, generatedTempDir);
 
 
             // Default to the first association in the list
             var association = Config.FileAssociationConfig.AssociationList[targetFileExt][0];
 
             // Process translation steps, if any
-            string translatedOutput = originTextBlock.Text;
+            string translatedOutput = selectedTextBlock.Text;
             foreach (string translationStep in association.TranslationSteps)
             {
                 object resolvedTranslator = Config.FileAssociationConfig.ResolveInternalExternal(translationStep) as Process;
@@ -256,8 +263,11 @@ namespace FlashbackLight
             // Get editor window if association is internal, launch external program otherwise
             object resolvedEditor = Config.FileAssociationConfig.ResolveInternalExternal(association.EditorProgram);
 
-            // Add the target editor to our tracking database
-            ActiveFileDatabase.Add(generatedTempDir, (resolvedEditor, CurrentArchivePath, translatedOutput));
+            // Add the target editor to our tracking database (use the non-translated subfile name here!!!)
+            ActiveFileDatabase.Add(generatedTempDir, new EditorTrackingInfo { 
+                Editor = resolvedEditor,
+                OriginArchivePath = CurrentArchivePath,
+                SubfileName = selectedTextBlock.Text });
 
             if (resolvedEditor is Window)
             {
