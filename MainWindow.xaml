@@ -26,7 +26,13 @@
                 <ListView x:Name="FileSystemListView" MouseDoubleClick="FileSystemListView_MouseDoubleClick"/>
             </GroupBox>
             <GroupBox Grid.Row="1" Header="Archive Files">
-                <ListView x:Name="ArchiveListView" MouseDoubleClick="ArchiveListView_MouseDoubleClick"/>
+                <ListView x:Name="ArchiveListView" MouseDoubleClick="ArchiveListView_MouseDoubleClick">
+                    <ListView.ItemContainerStyle>
+                        <Style TargetType="ListViewItem">
+                            <Setter Property="HorizontalContentAlignment" Value="Stretch"/>
+                        </Style>
+                    </ListView.ItemContainerStyle>
+                </ListView>
             </GroupBox>
         </Grid>
     </Grid>

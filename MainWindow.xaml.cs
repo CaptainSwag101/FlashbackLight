@@ -135,6 +135,7 @@ namespace FlashbackLight
             {
                 TextBlock tb = new TextBlock();
                 tb.Text = subfile.Name;
+                tb.MouseRightButtonDown += GenerateSubfileContextMenu;
                 ArchiveListView.Items.Add(tb);
             }
         }
@@ -180,6 +181,12 @@ namespace FlashbackLight
 
         private void ArchiveListView_MouseDoubleClick(object sender, MouseButtonEventArgs e)
         {
+            if (e.RightButton.HasFlag(MouseButtonState.Pressed)) return;
+            OpenSelectedArchiveSubfile(sender, 0);
+        }
+
+        private void OpenSelectedArchiveSubfile(object sender, int associationIndex = 0)
+        {
             if (sender == null || !(sender is ListView))
                 return;
 
@@ -208,7 +215,7 @@ namespace FlashbackLight
 
 
             // Default to the first association in the list
-            var association = Config.FileAssociationConfig.AssociationList[targetFileExt][0];
+            var association = Config.FileAssociationConfig.AssociationList[targetFileExt][associationIndex];
 
             // Process translation steps, if any
             string translatedOutput = selectedTextBlock.Text;
@@ -301,6 +308,26 @@ namespace FlashbackLight
             }
         }
 
+        private void GenerateSubfileContextMenu(object sender, MouseButtonEventArgs e)
+        {
+            if (sender == null) return;
+            if (!(sender is TextBlock senderTextBlock)) return;
+
+            if (senderTextBlock.ContextMenu == null) senderTextBlock.ContextMenu = new ContextMenu();
+
+            senderTextBlock.ContextMenu.Items.Clear();
+
+            // Dynamically generate the ContextMenu for the control
+            string fileExt = Path.GetExtension(senderTextBlock.Text);
+            if (!Config.FileAssociationConfig.AssociationList.ContainsKey(fileExt)) return;
+            foreach (var association in Config.FileAssociationConfig.AssociationList[fileExt])
+            {
+                MenuItem item = new MenuItem() { Header = association.EditorProgram };
+                item.Click += SubfileContextMenuItem_Click;
+                senderTextBlock.ContextMenu.Items.Add(item);
+            }
+        }
+
         private void SelectWorkspaceMenuItem_Click(object sender, RoutedEventArgs e)
         {
             CommonOpenFileDialog openFile = new CommonOpenFileDialog();
@@ -312,6 +339,17 @@ namespace FlashbackLight
             {
                 PopulateFileSystemListView(selectedDir);
             }
+        }
+
+        private void SubfileContextMenuItem_Click(object sender, RoutedEventArgs e)
+        {
+            if (sender == null) return;
+            if (!(sender is MenuItem senderMenuItem)) return;
+            if ((ArchiveListView.SelectedItem == null) || !(ArchiveListView.SelectedItem is TextBlock selectedTextBlock)) return;
+            if (selectedTextBlock.ContextMenu == null || selectedTextBlock.ContextMenu.Items.Count == 0) return;
+
+            int index = selectedTextBlock.ContextMenu.Items.IndexOf(senderMenuItem);
+            OpenSelectedArchiveSubfile(ArchiveListView, index);
         }
 
         private void OnEditorWindowClosed(object sender, CancelEventArgs e)
