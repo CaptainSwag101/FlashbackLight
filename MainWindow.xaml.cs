@@ -332,7 +332,8 @@ namespace FlashbackLight
         {
             CommonOpenFileDialog openFile = new CommonOpenFileDialog();
             openFile.IsFolderPicker = true;
-            openFile.ShowDialog();
+
+            if (openFile.ShowDialog().HasFlag(CommonFileDialogResult.Cancel)) return;
 
             string selectedDir = openFile.FileName;
             if (!string.IsNullOrWhiteSpace(selectedDir) && File.GetAttributes(selectedDir).HasFlag(FileAttributes.Directory))
