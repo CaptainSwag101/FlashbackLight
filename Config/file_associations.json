@@ -1,0 +1,28 @@
+{
+  ".stx": [
+    {
+      "TranslationSteps": [],
+      "EditorProgram": "internal:FlashbackLight.Editors.StxEditor"
+    },
+    {
+      "TranslationSteps": [
+        "external:D:\\jpmac\\Documents\\GitHub\\DRV3-Sharp\\~Build\\Release\\StxTool.exe"
+      ],
+      "EditorProgram": "external:C:\\Program Files\\Notepad++\\notepad++.exe"
+    }
+  ],
+  ".dat": [
+    {
+      "TranslationSteps": [
+        "external:D:\\jpmac\\Documents\\GitHub\\DRV3-Sharp\\~Build\\Release\\DatTool.exe"
+      ],
+      "EditorProgram": "external:C:\\Program Files\\LibreOffice\\program\\scalc.exe"
+    }
+  ],
+  ".wrd": [
+    {
+      "TranslationSteps": [],
+      "EditorProgram": "internal:FlashbackLight.Editors.WrdEditor"
+    }
+  ]
+}

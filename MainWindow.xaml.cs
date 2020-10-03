@@ -62,8 +62,15 @@ namespace FlashbackLight
             //        EditorProgram = @"external:C:\Program Files\Notepad++\notepad++.exe"
             //    }
             //});
+            //Config.FileAssociationConfig.AssociationList.Add(".wrd", new List<Config.FileAssociationConfig.FileAssociation>
+            //{
+            //    new Config.FileAssociationConfig.FileAssociation
+            //    {
+            //        TranslationSteps = new List<string>(),
+            //        EditorProgram = $"internal:{typeof(Editors.WrdEditor).FullName}"
+            //    }
+            //});
             Config.FileAssociationConfig.Save();
-            return;
         }
 
         /// <summary>
@@ -180,16 +187,14 @@ namespace FlashbackLight
             if (!Config.FileAssociationConfig.AssociationList.ContainsKey(targetFileExt))
                 throw new NotImplementedException($"The filetype {targetFileExt} is not supported.");
 
-
-            // Extract the subfile to a temporary folder
+            // Create the inner temp directory
             //string trackingHash = (CurrentArchivePath + originTextBlock.Text).GetHashCode().ToString("X8");
             string trackingHash = Path.GetRandomFileName();
             string generatedTempDir = Path.Combine(AppTempDirInfo.FullName, trackingHash);
             //string tempFileLocation = Path.Combine(generatedTempDir, originTextBlock.Text);
-
-            // Create the inner temp directory
             Directory.CreateDirectory(generatedTempDir);
 
+            // Extract the subfile to a temporary folder
             SpcFile temp = new SpcFile();
             temp.Load(CurrentArchivePath);
             temp.ExtractSubfile(originTextBlock.Text, generatedTempDir);
@@ -221,6 +226,11 @@ namespace FlashbackLight
 
                     translatorProcess.Start();
                     translatorProcess.WaitForExit();
+                }
+                else
+                {
+                    // If we get here, there's been an error and we should abort and clean up
+                    Directory.Delete(generatedTempDir, true);
                 }
 
                 // Check for any extra files and use the first that isn't our starting file as the translated output
@@ -273,6 +283,12 @@ namespace FlashbackLight
                 // Finally, open the target editor window
                 editorProcess.Start();
             }
+            else
+            {
+                // If we get here, there's been an error and we should abort and clean up
+                Directory.Delete(generatedTempDir, true);
+                ActiveFileDatabase.Remove(generatedTempDir);
+            }
         }
 
         private void SelectWorkspaceMenuItem_Click(object sender, RoutedEventArgs e)
@@ -305,6 +321,7 @@ namespace FlashbackLight
 
             // Delete the temp file for that directory after we've finished rebuilding the origin archive, etc.
             Directory.Delete(matchingEntry.Key, true);
+            ActiveFileDatabase.Remove(matchingEntry.Key);
         }
 
         private void OnEditorProcessExited(object sender, EventArgs e)
@@ -322,6 +339,7 @@ namespace FlashbackLight
 
             // Delete the temp file for that directory after we've finished rebuilding the origin archive, etc.
             Directory.Delete(matchingEntry.Key, true);
+            ActiveFileDatabase.Remove(matchingEntry.Key);
         }
     }
 }

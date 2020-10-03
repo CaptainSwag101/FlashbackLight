@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
 using System.Text;
+using System.Windows;
 using Newtonsoft.Json;
 
 namespace FlashbackLight.Config
@@ -22,7 +23,7 @@ namespace FlashbackLight.Config
         public static Dictionary<string, List<FileAssociation>> AssociationList = new Dictionary<string, List<FileAssociation>>();
 
         // Name of the config file
-        private const string configFilename = "file_associations.json";
+        private const string configFilename = @"Config\file_associations.json";
 
         /// <summary>
         /// Reads the config file from disk.
@@ -62,15 +63,25 @@ namespace FlashbackLight.Config
         public static object ResolveInternalExternal(string step)
         {
             // Get editor window if association is internal, external process otherwise
-            if (step.StartsWith("internal:"))
+            if (step.StartsWith(@"internal:"))
             {
-                Type editorType = Type.GetType(step.Substring("internal:".Length));
+                string className = step.Substring(@"internal:".Length);
+
+                // Security measure: do not allow instantiating any classes that aren't part of the FlashbackLight root namespace
+                if (!className.StartsWith(@"FlashbackLight."))
+                {
+                    MessageBox.Show($"SECURITY WARNING: {nameof(FileAssociationConfig)} attempted to load an editor class from a non-FlashbackLight namespace {className}, aborting!",
+                        "SECURITY WARNING", MessageBoxButton.OK, MessageBoxImage.Stop);
+                    return null;
+                }
+
+                Type editorType = Type.GetType(className);
                 return Activator.CreateInstance(editorType);
             }
-            else if (step.StartsWith("external:"))
+            else if (step.StartsWith(@"external:"))
             {
                 Process editorProcess = new Process();
-                editorProcess.StartInfo.FileName = step.Substring("external:".Length);
+                editorProcess.StartInfo.FileName = step.Substring(@"external:".Length);
 
                 return editorProcess;
             }
