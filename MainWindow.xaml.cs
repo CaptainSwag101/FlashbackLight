@@ -30,6 +30,7 @@ namespace FlashbackLight
             public object Editor;
             public string OriginArchivePath;
             public List<string> SubfileNameHistory;
+            public Config.FileAssociationConfig.FileAssociation SelectedAssociation;
         }
 
         private readonly DirectoryInfo AppTempDirInfo;
@@ -66,13 +67,13 @@ namespace FlashbackLight
                 }
             }
 
-            foreach (var activeEditor in ActiveFileDatabase.Values)
+            foreach (var entry in ActiveFileDatabase.Values)
             {
-                if (activeEditor.Editor is Window editorWindow)
+                if (entry.Editor is Window editorWindow)
                 {
                     editorWindow.Close();
                 }
-                else if (activeEditor.Editor is Process editorProcess)
+                else if (entry.Editor is Process editorProcess)
                 {
                     if (!editorProcess.HasExited)
                     {
@@ -314,7 +315,8 @@ namespace FlashbackLight
             ActiveFileDatabase.Add(generatedTempDir, new EditorTrackingInfo { 
                 Editor = resolvedEditor,
                 OriginArchivePath = CurrentArchiveFileInfo.FullName,
-                SubfileNameHistory = translatedOutputHistory });
+                SubfileNameHistory = translatedOutputHistory,
+                SelectedAssociation = association });
 
             if (resolvedEditor is Window)
             {
@@ -406,6 +408,7 @@ namespace FlashbackLight
 
 
             // TODO: Do stuff like rebuild origin archive here
+            RepackArchiveSubfile(matchingEntry.Key, matchingEntry.Value);
 
 
             // Delete the temp file for that directory after we've finished rebuilding the origin archive, etc.
@@ -424,11 +427,54 @@ namespace FlashbackLight
 
 
             // TODO: Do stuff like rebuild origin archive here
+            RepackArchiveSubfile(matchingEntry.Key, matchingEntry.Value);
 
 
             // Delete the temp file for that directory after we've finished rebuilding the origin archive, etc.
             Directory.Delete(matchingEntry.Key, true);
             ActiveFileDatabase.Remove(matchingEntry.Key);
+        }
+
+        private void RepackArchiveSubfile(string tempDir, EditorTrackingInfo info)
+        {
+            // First, run all translation steps in reverse
+            var translationSteps = info.SelectedAssociation.TranslationSteps;
+            var translatedFilenames = info.SubfileNameHistory;
+            for (int step = (translationSteps.Count - 1); step >= 0; --step)
+            {
+                // Resolve internal/external translator
+                object resolvedTranslator = Config.FileAssociationConfig.ResolveInternalExternal(translationSteps[step]) as Process;
+
+                // Run the translation step
+                if (resolvedTranslator is Window)
+                {
+                    Window translatorWindow = resolvedTranslator as Window;
+
+                    // Finally, open the target editor window as blocking
+                    translatorWindow.ShowDialog();
+                }
+                else if (resolvedTranslator is Process)
+                {
+                    Process translatorProcess = resolvedTranslator as Process;
+
+                    // Setup the target process' launch args
+                    translatorProcess.StartInfo.Arguments = Path.Combine(tempDir, translatedFilenames[step + 1]);
+
+                    translatorProcess.Start();
+                    translatorProcess.WaitForExit();
+                }
+                else
+                {
+                    // If we get here, there's been an error and we should abort
+                    return;
+                }
+            }
+
+            // The final translated filename is the original file & format, repack it
+            SpcFile spc = new SpcFile();
+            spc.Load(info.OriginArchivePath);
+            spc.InsertSubfile(Path.Combine(tempDir, translatedFilenames[0]));
+            spc.Save(info.OriginArchivePath);
         }
     }
 }
