@@ -25,10 +25,6 @@ namespace FlashbackLight
     /// </summary>
     public partial class MainWindow : Window
     {
-        public DirectoryInfo AppTempDirInfo;
-        public string CurrentFileSystemDir;
-        public string CurrentArchivePath;
-
         private struct EditorTrackingInfo
         {
             public object Editor;
@@ -36,8 +32,10 @@ namespace FlashbackLight
             public List<string> SubfileNameHistory;
         }
 
-        // Key is editor temporary scratch directory
-        private readonly Dictionary<string, EditorTrackingInfo> ActiveFileDatabase;
+        private readonly DirectoryInfo AppTempDirInfo;
+        private DirectoryInfo CurrentWorkspaceDirInfo;
+        private FileInfo CurrentArchiveFileInfo;
+        private readonly Dictionary<string, EditorTrackingInfo> ActiveFileDatabase; // Key is editor temporary scratch directory
 
         public MainWindow()
         {
@@ -58,6 +56,48 @@ namespace FlashbackLight
 
         public void OnMainWindowClosing(object sender, CancelEventArgs e)
         {
+            // Warn if closing with active files
+            if (ActiveFileDatabase.Count > 0)
+            {
+                if (MessageBox.Show($"You have {ActiveFileDatabase.Count} files currently open for editing, are you sure you want to close?", "Close open files?", MessageBoxButton.YesNo, MessageBoxImage.Warning) == MessageBoxResult.No)
+                {
+                    e.Cancel = true;
+                    return;
+                }
+            }
+
+            foreach (var activeEditor in ActiveFileDatabase.Values)
+            {
+                if (activeEditor.Editor is Window editorWindow)
+                {
+                    editorWindow.Close();
+                }
+                else if (activeEditor.Editor is Process editorProcess)
+                {
+                    if (!editorProcess.HasExited)
+                    {
+                        if (editorProcess.CloseMainWindow())
+                        {
+                            editorProcess.WaitForExit();
+                        }
+                        else
+                        {
+                            MessageBoxResult result = MessageBox.Show($"Unable to send close signal to {editorProcess.ProcessName}, forcibly close the process?", "Forcibly close?", MessageBoxButton.YesNoCancel);
+                            if (result == MessageBoxResult.Yes)
+                                editorProcess.Kill();
+                            else if (result == MessageBoxResult.No)
+                                continue;
+                            else
+                            {
+                                e.Cancel = true;
+                                return;
+                            }
+                        }
+                    }
+                    editorProcess.Close();
+                }
+            }
+
             //Config.FileAssociationConfig.AssociationList.Add(".stx", new List<Config.FileAssociationConfig.FileAssociation>
             //{
             //    new Config.FileAssociationConfig.FileAssociation
@@ -88,8 +128,7 @@ namespace FlashbackLight
         {
             FileSystemListView.Items.Clear();
 
-            CurrentFileSystemDir = newDir;
-            DirectoryInfo startDir = new DirectoryInfo(CurrentFileSystemDir);
+            CurrentWorkspaceDirInfo = new DirectoryInfo(newDir);
 
             TextBlock upDirTb = new TextBlock();
             upDirTb.Text = "..";
@@ -97,16 +136,16 @@ namespace FlashbackLight
           
             FileSystemListView.Items.Add(upDirTb);
 
-            // Populate list with directories (color them blue to differentiate)
-            foreach (var dir in startDir.EnumerateDirectories())
+            // First, populate list with directories (color them blue to differentiate)
+            foreach (var dir in CurrentWorkspaceDirInfo.EnumerateDirectories())
             {
                 TextBlock tb = new TextBlock();
                 tb.Text = dir.Name;
                 tb.Foreground = Brushes.Blue;
                 FileSystemListView.Items.Add(tb);
             }
-            // Populate list with files
-            foreach (var file in startDir.EnumerateFiles())
+            // Second, populate list with files
+            foreach (var file in CurrentWorkspaceDirInfo.EnumerateFiles())
             {
                 // Don't show hidden or system files, for safety reasons
                 var attr = File.GetAttributes(file.FullName);
@@ -125,9 +164,9 @@ namespace FlashbackLight
         /// <param name="file">The archive file whose contents will populate the view.</param>
         public void PopulateArchiveListView(string file)
         {
-            CurrentArchivePath = file;
+            CurrentArchiveFileInfo = new FileInfo(file);
             SpcFile tempSpc = new SpcFile();
-            tempSpc.Load(CurrentArchivePath);
+            tempSpc.Load(CurrentArchiveFileInfo.FullName);
 
             ArchiveListView.Items.Clear();
 
@@ -151,13 +190,13 @@ namespace FlashbackLight
             // If the selected TextBlock is the "up directory" then adjust the path accordingly
             if (originTextBlock.Text == "..")
             {
-                string parentDir = Directory.GetParent(CurrentFileSystemDir).FullName;
+                string parentDir = CurrentWorkspaceDirInfo.Parent.FullName;
                 PopulateFileSystemListView(parentDir);
                 return;
             }
 
             // Check if the new path is a directory or file
-            string combinedPath = Path.Combine(CurrentFileSystemDir, originTextBlock.Text);
+            string combinedPath = Path.Combine(CurrentWorkspaceDirInfo.FullName, originTextBlock.Text);
             FileAttributes attr = File.GetAttributes(combinedPath);
             if (attr.HasFlag(FileAttributes.Directory))
             {
@@ -210,7 +249,7 @@ namespace FlashbackLight
 
             // Extract the subfile to a temporary folder
             SpcFile temp = new SpcFile();
-            temp.Load(CurrentArchivePath);
+            temp.Load(CurrentArchiveFileInfo.FullName);
             temp.ExtractSubfile(selectedTextBlock.Text, generatedTempDir);
 
 
@@ -237,7 +276,7 @@ namespace FlashbackLight
                     Process translatorProcess = resolvedTranslator as Process;
 
                     // Setup the target process' launch args
-                    translatorProcess.StartInfo.Arguments = generatedTempDir + Path.DirectorySeparatorChar + translatedOutputHistory.Last();
+                    translatorProcess.StartInfo.Arguments = Path.Combine(generatedTempDir, translatedOutputHistory.Last());
 
                     translatorProcess.Start();
                     translatorProcess.WaitForExit();
@@ -274,7 +313,7 @@ namespace FlashbackLight
             // Add the target editor to our tracking database (use the non-translated subfile name here!!!)
             ActiveFileDatabase.Add(generatedTempDir, new EditorTrackingInfo { 
                 Editor = resolvedEditor,
-                OriginArchivePath = CurrentArchivePath,
+                OriginArchivePath = CurrentArchiveFileInfo.FullName,
                 SubfileNameHistory = translatedOutputHistory });
 
             if (resolvedEditor is Window)
