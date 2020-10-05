@@ -33,7 +33,7 @@ namespace FlashbackLight
         {
             public object Editor;
             public string OriginArchivePath;
-            public string SubfileName;
+            public List<string> SubfileNameHistory;
         }
 
         // Key is editor temporary scratch directory
@@ -218,7 +218,8 @@ namespace FlashbackLight
             var association = Config.FileAssociationConfig.AssociationList[targetFileExt][associationIndex];
 
             // Process translation steps, if any
-            string translatedOutput = selectedTextBlock.Text;
+            List<string> translatedOutputHistory = new List<string>();
+            translatedOutputHistory.Add(selectedTextBlock.Text);
             foreach (string translationStep in association.TranslationSteps)
             {
                 object resolvedTranslator = Config.FileAssociationConfig.ResolveInternalExternal(translationStep) as Process;
@@ -236,7 +237,7 @@ namespace FlashbackLight
                     Process translatorProcess = resolvedTranslator as Process;
 
                     // Setup the target process' launch args
-                    translatorProcess.StartInfo.Arguments = generatedTempDir + Path.DirectorySeparatorChar + translatedOutput;
+                    translatorProcess.StartInfo.Arguments = generatedTempDir + Path.DirectorySeparatorChar + translatedOutputHistory.Last();
 
                     translatorProcess.Start();
                     translatorProcess.WaitForExit();
@@ -253,7 +254,7 @@ namespace FlashbackLight
                 {
                     FileInfo tempInfo = new FileInfo(file);
 
-                    if (tempInfo.Name != translatedOutput)
+                    if (!translatedOutputHistory.Contains(tempInfo.Name))
                     {
                         newFiles.Add(tempInfo.Name);
                     }
@@ -262,7 +263,7 @@ namespace FlashbackLight
                 // TODO: If multiple new files are generated, prompt the user for which file to use as the output
                 foreach (string newFile in newFiles)
                 {
-                    translatedOutput = newFile;
+                    translatedOutputHistory.Add(newFile);
                     break;
                 }
             }
@@ -274,7 +275,7 @@ namespace FlashbackLight
             ActiveFileDatabase.Add(generatedTempDir, new EditorTrackingInfo { 
                 Editor = resolvedEditor,
                 OriginArchivePath = CurrentArchivePath,
-                SubfileName = selectedTextBlock.Text });
+                SubfileNameHistory = translatedOutputHistory });
 
             if (resolvedEditor is Window)
             {
@@ -295,7 +296,7 @@ namespace FlashbackLight
                 editorProcess.Exited += OnEditorProcessExited;
 
                 // Setup the target process' launch args
-                editorProcess.StartInfo.Arguments = generatedTempDir + Path.DirectorySeparatorChar + translatedOutput;
+                editorProcess.StartInfo.Arguments = generatedTempDir + Path.DirectorySeparatorChar + translatedOutputHistory.Last();
 
                 // Finally, open the target editor window
                 editorProcess.Start();
