@@ -82,7 +82,7 @@ namespace FlashbackLight
                         }
                         else
                         {
-                            MessageBoxResult result = MessageBox.Show($"Unable to send close signal to {editorProcess.ProcessName}, forcibly close the process?", "Forcibly close?", MessageBoxButton.YesNoCancel);
+                            MessageBoxResult result = MessageBox.Show($"Unable to send close signal to {editorProcess.ProcessName}, forcibly close the process? You may lose unsaved work!", "Forcibly close?", MessageBoxButton.YesNoCancel);
                             if (result == MessageBoxResult.Yes)
                                 editorProcess.Kill();
                             else if (result == MessageBoxResult.No)
