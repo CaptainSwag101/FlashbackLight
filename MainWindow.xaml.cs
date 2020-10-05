@@ -473,7 +473,8 @@ namespace FlashbackLight
             // The final translated filename is the original file & format, repack it
             SpcFile spc = new SpcFile();
             spc.Load(info.OriginArchivePath);
-            spc.InsertSubfile(Path.Combine(tempDir, translatedFilenames[0]));
+            string fullSubfilePath = Path.Combine(tempDir, translatedFilenames[0]);
+            spc.InsertSubfile(fullSubfilePath, true, true);
             spc.Save(info.OriginArchivePath);
         }
     }
