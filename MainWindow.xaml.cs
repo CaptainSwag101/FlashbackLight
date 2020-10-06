@@ -435,6 +435,12 @@ namespace FlashbackLight
             ActiveFileDatabase.Remove(matchingEntry.Key);
         }
 
+        /// <summary>
+        /// Processes a previously-extracted subfile that's open in an editor. This process runs its translation steps backwards,
+        /// before finally re-packing the final product into the original SPC file it came from.
+        /// </summary>
+        /// <param name="tempDir">The temporary directory where the extracted subfile data is located.</param>
+        /// <param name="info">The <see cref="EditorTrackingInfo"/> associated with the editor and subfile.</param>
         private void RepackArchiveSubfile(string tempDir, EditorTrackingInfo info)
         {
             // First, run all translation steps in reverse
@@ -474,7 +480,7 @@ namespace FlashbackLight
             SpcFile spc = new SpcFile();
             spc.Load(info.OriginArchivePath);
             string fullSubfilePath = Path.Combine(tempDir, translatedFilenames[0]);
-            spc.InsertSubfile(fullSubfilePath, true, true);
+            spc.InsertSubfile(fullSubfilePath);
             spc.Save(info.OriginArchivePath);
         }
     }
