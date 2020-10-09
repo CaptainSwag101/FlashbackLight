@@ -15,6 +15,7 @@ using System.Windows.Input;
 using System.Windows.Media;
 using System.Windows.Media.Imaging;
 using System.Windows.Navigation;
+using FlashbackLight.Editors;
 using Microsoft.WindowsAPICodePack.Dialogs;
 using V3Lib.Spc;
 
@@ -318,12 +319,15 @@ namespace FlashbackLight
                 SubfileNameHistory = translatedOutputHistory,
                 SelectedAssociation = association });
 
-            if (resolvedEditor is Window)
+            if (resolvedEditor is Window && resolvedEditor is IFileEditor)
             {
                 Window editorWindow = resolvedEditor as Window;
 
                 // Subscribe to the editor's closing event so we can rebuild its target archive and clean up any temporary files
                 editorWindow.Closing += OnEditorWindowClosed;
+
+                // Open the target file's data in the editor
+                (resolvedEditor as IFileEditor).LoadFile(Path.Combine(generatedTempDir, translatedOutputHistory.Last()));
 
                 // Finally, open the target editor window
                 editorWindow.Show();

@@ -5,8 +5,41 @@
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
         xmlns:local="clr-namespace:FlashbackLight.Editors"
         mc:Ignorable="d"
-        Title="STX Editor" Height="450" Width="800">
+        Title="STX Editor" Height="450" Width="500">
     <Grid>
-        
+        <Grid.ColumnDefinitions>
+            <ColumnDefinition Width="1*"/>
+            <ColumnDefinition Width="30"/>
+        </Grid.ColumnDefinitions>
+        <ListBox Grid.Column="0" Name="StringListBox">
+            <ListBox.ItemTemplate>
+                <DataTemplate>
+                    <TextBox Text="{Binding Path=.}" HorizontalContentAlignment="Stretch" IsReadOnly="False" AcceptsReturn="True" AcceptsTab="False" TextWrapping="NoWrap"/>
+                </DataTemplate>
+            </ListBox.ItemTemplate>
+        </ListBox>
+        <Grid Grid.Column="1">
+            <Grid.RowDefinitions>
+                <RowDefinition Height="3*"/>
+                <RowDefinition Height="1*"/>
+                <RowDefinition Height="1*"/>
+                <RowDefinition Height="3*"/>
+                <RowDefinition Height="1*"/>
+                <RowDefinition Height="1*"/>
+                <RowDefinition Height="3*"/>
+            </Grid.RowDefinitions>
+            <Button Grid.Row="1" Click="StringMoveUp">
+                <TextBlock Text="Up"/>
+            </Button>
+            <Button Grid.Row="2" Click="StringMoveDown">
+                <TextBlock Text="Dn"/>
+            </Button>
+            <Button Grid.Row="4" Click="StringAdd">
+                <TextBlock Text="Add"/>
+            </Button>
+            <Button Grid.Row="5" Click="StringRemove">
+                <TextBlock Text="Rem"/>
+            </Button>
+        </Grid>
     </Grid>
 </Window>
