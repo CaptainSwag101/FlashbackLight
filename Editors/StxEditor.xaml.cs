@@ -19,7 +19,8 @@ namespace FlashbackLight.Editors
     /// </summary>
     public partial class StxEditor : Window, IFileEditor
     {
-        public ObservableCollection<string> Strings;
+        private ObservableCollection<string> Strings;
+        private string StxPath;
 
         public StxEditor()
         {
@@ -30,12 +31,13 @@ namespace FlashbackLight.Editors
         {
             StxFile stx = new StxFile();
             stx.Load(stxFilePath);
+            StxPath = stxFilePath;
 
             Strings = new ObservableCollection<string>(stx.StringTables[0].Strings);
             StringListBox.ItemsSource = Strings;
         }
 
-        public void SaveFile(string path)
+        public void SaveFile()
         {
             throw new NotImplementedException();
         }
@@ -73,6 +75,7 @@ namespace FlashbackLight.Editors
             int selectedIndex = StringListBox.SelectedIndex;
 
             if (selectedIndex < 0 || selectedIndex >= Strings.Count) selectedIndex = Strings.Count - 1;
+            if (Strings.Count == 0) selectedIndex = 0;
 
             Strings.Insert(selectedIndex, string.Empty);
 
@@ -87,7 +90,17 @@ namespace FlashbackLight.Editors
 
             Strings.RemoveAt(selectedIndex);
 
-            StringListBox.SelectedIndex = selectedIndex - 1;
+            StringListBox.SelectedIndex = Math.Min(selectedIndex, Strings.Count - 1);
+        }
+
+        private void SaveMenuItem_Click(object sender, RoutedEventArgs e)
+        {
+            SaveFile();
+        }
+
+        private void ChangeTableMenuItem_Click(object sender, RoutedEventArgs e)
+        {
+
         }
     }
 }

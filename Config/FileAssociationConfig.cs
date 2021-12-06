@@ -40,7 +40,7 @@ namespace FlashbackLight.Config
             }
             catch (Exception ex)
             {
-                throw ex;
+                throw;
             }
         }
 
@@ -56,7 +56,7 @@ namespace FlashbackLight.Config
             }
             catch (Exception ex)
             {
-                throw ex;
+                throw;
             }
         }
 

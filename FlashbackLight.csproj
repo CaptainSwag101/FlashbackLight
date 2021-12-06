@@ -2,8 +2,21 @@
 
   <PropertyGroup>
     <OutputType>WinExe</OutputType>
-    <TargetFramework>netcoreapp3.1</TargetFramework>
+    <TargetFramework>net6.0-windows</TargetFramework>
     <UseWPF>true</UseWPF>
+    <StartupObject>FlashbackLight.App</StartupObject>
+    <Nullable>enable</Nullable>
+    <ProduceReferenceAssembly>False</ProduceReferenceAssembly>
+    <RepositoryType>git</RepositoryType>
+    <RepositoryUrl>https://github.com/jpmac26/FlashbackLight</RepositoryUrl>
+  </PropertyGroup>
+
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|AnyCPU'">
+    <CheckForOverflowUnderflow>True</CheckForOverflowUnderflow>
+  </PropertyGroup>
+
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|AnyCPU'">
+    <CheckForOverflowUnderflow>True</CheckForOverflowUnderflow>
   </PropertyGroup>
 
   <ItemGroup>
@@ -14,14 +27,33 @@
   </ItemGroup>
 
   <ItemGroup>
-    <PackageReference Include="Microsoft.WindowsAPICodePack-Core" Version="1.1.0.2" />
-    <PackageReference Include="Microsoft.WindowsAPICodePack-Shell" Version="1.1.0" />
-    <PackageReference Include="Newtonsoft.Json" Version="12.0.3" />
+    <PackageReference Include="HelixToolkit.SharpDX.Core" Version="2.20.0" />
+    <PackageReference Include="HelixToolkit.Wpf.SharpDX" Version="2.20.0" />
+    <PackageReference Include="Newtonsoft.Json" Version="13.0.1" />
+    <PackageReference Include="SharpDX" Version="4.2.0" />
+    <PackageReference Include="SharpDX.Diagnostics" Version="2.0.4" />
+    <PackageReference Include="SharpDX.Direct3D11" Version="4.2.0" />
+    <PackageReference Include="SharpDX.Mathematics" Version="4.2.0" />
   </ItemGroup>
 
   <ItemGroup>
     <Reference Include="V3Lib">
       <HintPath>dependencies\V3Lib.dll</HintPath>
+    </Reference>
+    <Reference Include="WinCopies.WindowsAPICodePack">
+      <HintPath>dependencies\WinCopies.WindowsAPICodePack.dll</HintPath>
+    </Reference>
+    <Reference Include="WinCopies.WindowsAPICodePack.COMNative">
+      <HintPath>dependencies\WinCopies.WindowsAPICodePack.COMNative.dll</HintPath>
+    </Reference>
+    <Reference Include="WinCopies.WindowsAPICodePack.Consts">
+      <HintPath>dependencies\WinCopies.WindowsAPICodePack.Consts.dll</HintPath>
+    </Reference>
+    <Reference Include="WinCopies.WindowsAPICodePack.Shell">
+      <HintPath>dependencies\WinCopies.WindowsAPICodePack.Shell.dll</HintPath>
+    </Reference>
+    <Reference Include="WinCopies.WindowsAPICodePack.Win32Native">
+      <HintPath>dependencies\WinCopies.WindowsAPICodePack.Win32Native.dll</HintPath>
     </Reference>
   </ItemGroup>
 

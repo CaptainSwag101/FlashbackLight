@@ -323,8 +323,8 @@ namespace FlashbackLight
             {
                 Window editorWindow = resolvedEditor as Window;
 
-                // Subscribe to the editor's closing event so we can rebuild its target archive and clean up any temporary files
-                editorWindow.Closing += OnEditorWindowClosed;
+                // Subscribe to the editor's closed event so we can rebuild its target archive and clean up any temporary files
+                editorWindow.Closed += OnEditorWindowClosed;
 
                 // Open the target file's data in the editor
                 (resolvedEditor as IFileEditor).LoadFile(Path.Combine(generatedTempDir, translatedOutputHistory.Last()));
@@ -336,7 +336,7 @@ namespace FlashbackLight
             {
                 Process editorProcess = resolvedEditor as Process;
 
-                // Subscribe to the editor's closing event so we can rebuild its target archive and clean up any temporary files
+                // Subscribe to the editor's exit event so we can rebuild its target archive and clean up any temporary files
                 editorProcess.EnableRaisingEvents = true;
                 editorProcess.Exited += OnEditorProcessExited;
 
@@ -399,10 +399,8 @@ namespace FlashbackLight
             OpenSelectedArchiveSubfile(ArchiveListView, index);
         }
 
-        private void OnEditorWindowClosed(object sender, CancelEventArgs e)
+        private void OnEditorWindowClosed(object sender, EventArgs e)
         {
-            // The statement "e.Cancel = true;" will cancel the closure of the target window
-
             // Find the matching window instance in our tracking database
             Window senderWindow = sender as Window;
             if (sender == null)

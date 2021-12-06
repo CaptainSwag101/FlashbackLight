@@ -7,6 +7,6 @@ namespace FlashbackLight.Editors
     interface IFileEditor
     {
         public void LoadFile(string path);
-        public void SaveFile(string path);
+        public void SaveFile();
     }
 }

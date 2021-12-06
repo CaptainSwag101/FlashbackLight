@@ -7,18 +7,26 @@
         mc:Ignorable="d"
         Title="STX Editor" Height="450" Width="500">
     <Grid>
+        <Grid.RowDefinitions>
+            <RowDefinition Height="20"/>
+            <RowDefinition Height="1*"/>
+        </Grid.RowDefinitions>
         <Grid.ColumnDefinitions>
             <ColumnDefinition Width="1*"/>
             <ColumnDefinition Width="30"/>
         </Grid.ColumnDefinitions>
-        <ListBox Grid.Column="0" Name="StringListBox">
+        <Menu Grid.Row="0" Grid.ColumnSpan="2">
+            <MenuItem Header="_Save" Name="SaveMenuItem" Click="SaveMenuItem_Click"/>
+            <MenuItem Header="_Change Table" Name="ChangeTableMenuItem" Click="ChangeTableMenuItem_Click"/>
+        </Menu>
+        <ListBox Grid.Row="1" Grid.Column="0" Name="StringListBox">
             <ListBox.ItemTemplate>
                 <DataTemplate>
                     <TextBox Text="{Binding Path=.}" HorizontalContentAlignment="Stretch" IsReadOnly="False" AcceptsReturn="True" AcceptsTab="False" TextWrapping="NoWrap"/>
                 </DataTemplate>
             </ListBox.ItemTemplate>
         </ListBox>
-        <Grid Grid.Column="1">
+        <Grid Grid.Row="1" Grid.Column="1">
             <Grid.RowDefinitions>
                 <RowDefinition Height="3*"/>
                 <RowDefinition Height="1*"/>
